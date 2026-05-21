@@ -3,10 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>システム準備中</title>
+    <title>恋をしましょう - Helper</title>
+    <style>
+        body {
+            background-color: #fff;
+            color: #1a1a1a;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #container { text-align: center; width: 80%; max-width: 600px; }
+        
+        h1 { font-size: 1.2rem; font-weight: normal; margin-bottom: 3rem; }
+        .timer { font-size: 6rem; margin: 1rem 0; font-variant-numeric: tabular-nums; }
+        .red { color: #e60012; }
+        .info { font-size: 1.2rem; line-height: 1.8; margin-bottom: 2rem; }
+        .sub-info { font-size: 0.9rem; color: #666; margin-top: 1rem; }
+
+        button {
+            background: none; border: 1px solid #1a1a1a; padding: 10px 30px;
+            font-size: 1rem; cursor: pointer; transition: 0.2s;
+            margin: 5px;
+        }
+        button:hover { background-color: #1a1a1a; color: #fff; }
+        .hidden { display: none !important; }
+        
+        .button-group { margin-top: 1rem; }
+    </style>
 </head>
-<body style="text-align: center; padding: 50px; font-family: sans-serif;">
-    <h2>【SWFL システム】</h2>
-    <p>現在、システムを準備中です。<br>ゲームマーケット当日に公開されますので、今しばらくお待ちください。</p>
+<body>
+
+<div id="container">
+    <div id="title-view">
+        <h1>恋をしましょう</h1>
+        <button onclick="showView('setup-view')">ゲームを始める</button>
+    </div>
+
+    <div id="setup-view" class="hidden">
+        <h1>プレイヤー人数を選択</h1>
+        <button onclick="startDealer(4)">4人</button>
+        <button onclick="startDealer(5)">5人</button>
+        <button onclick="startDealer(6)">6人</button>
+    </div>
+
+    <div id="dealer-view" class="hidden">
+    </div>
+
+    <div id="talk-view" class="hidden">
+        <h1 id="theme-label">テーマ 1 / 5</h1>
+        <div id="player-label" class="info">Player Aさんの番</div>
+        <div id="talk-timer" class="timer">30</div>
+        <div class="button-group">
+            <button id="talk-start-btn" onclick="startTalkTimer()">開始</button>
+            <button id="talk-next-btn" onclick="nextTalk()">NEXT (スキップ)</button>
+        </div>
+    </div>
+
+    <div id="inference-view" class="hidden">
+        <h1>推理タイム</h1>
+        <div id="inference-timer" class="timer">180</div>
+        <div class="button-group">
+            <button id="inference-start-btn" onclick="startInferenceTimer()">開始</button>
+            <button onclick="showConfession()">予想を終える</button>
+        </div>
+        <div class="button-group">
+            <button onclick="location.reload()">最初からやり直す</button>
+        </div>
+    </div>
+
+    <div id="confession-view" class="hidden">
+        <h1>告白タイム</h1>
+        <div class="info">
+            Aさんから順に告白しましょう。<br><br>
+            <span id="last-player"></span>さんまで告白を終えた時点で、<br>
+            最もポイントの多いプレイヤーの勝利です。
+        </div>
+        <div class="button-group">
+            <button onclick="location.reload()">次のゲームへ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let players = [];
+    let pairings = {};
+    let numPlayers = 0;
+    let currentDealerIdx = 0;
+    let currentTheme = 1;
+    let currentPlayerIndex = 0;
+    let startPlayerOffset = 0;
+    let timerInterval;
+
+    const views = ['title-view', 'setup-view', 'dealer-view', 'talk-view', 'inference-view', 'confession-view'];
+    
+    function showView(id) {
+        views.forEach(v => document.getElementById(v).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // ディーラー機能
+    function startDealer(n) {
+        numPlayers = n;
+        players = Array.from({length: n}, (_, i) => String.fromCharCode(65 + i));
+        
+        let shuffled = [...players].sort(() => Math.random() - 0.5);
+        pairings = {};
+        for(let i=0; i<n; i++) {
+            pairings[shuffled[i]] = shuffled[(i + 1) % n];
+        }
+        
+        currentDealerIdx = 0;
+        showTargetStep();
+        showView('dealer-view');
+    }
+
+    function showTargetStep() {
+        const p = players[currentDealerIdx];
+        document.getElementById('dealer-view').innerHTML = `
+            <h1>ターゲットの確認</h1>
+            <div class="info">次は、<span class="red">${p}</span> さんの番です</div>
+            <div class="sub-info">他の方は画面を見ないでください</div>
+            <br>
+            <button onclick="revealTarget('${p}')">私は${p}さんです</button>
+        `;
+    }
+
+    function revealTarget(p) {
+        const target = pairings[p];
+        document.getElementById('dealer-view').innerHTML = `
+            <h1>ターゲットの確認</h1>
+            <div class="info">${p}さんはこのゲーム中</div>
+            <div class="timer red">${target}</div>
+            <div class="info">さんに恋をしましょう</div>
+            <br>
+            <button onclick="finishTargetStep()">確認しました</button>
+        `;
+    }
+
+    function finishTargetStep() {
+        currentDealerIdx++;
+        if (currentDealerIdx < numPlayers) {
+            showTargetStep();
+        } else {
+            document.getElementById('dealer-view').innerHTML = `
+                <h1>準備完了</h1>
+                <div class="info">全員の確認が終わりました。</div>
+                <br>
+                <button onclick="initTalk()">トーク開始</button>
+            `;
+        }
+    }
+
+    // トークタイマー機能
+    function initTalk() {
+        currentTheme = 1;
+        startPlayerOffset = 0;
+        showView('talk-view');
+        prepareTalkTurn();
+    }
+
+    // 次の人の順番をセットする（タイマーはまだ動かさない）
+    function prepareTalkTurn() {
+        clearInterval(timerInterval);
+        let actualPlayerIdx = (startPlayerOffset + currentPlayerIndex) % numPlayers;
+        
+        document.getElementById('theme-label').innerText = `テーマ ${currentTheme} / 5`;
+        document.getElementById('player-label').innerText = `Player ${players[actualPlayerIdx]} さんの番`;
+        
+        const timerDisplay = document.getElementById('talk-timer');
+        timerDisplay.innerText = "30";
+        timerDisplay.classList.remove('red');
+        
+        document.getElementById('talk-start-btn').classList.remove('hidden');
+    }
+
+    // 手動でトークタイマーを開始する
+    function startTalkTimer() {
+        document.getElementById('talk-start-btn').classList.add('hidden');
+        startCountdown(30, 'talk-timer', () => {
+            document.getElementById('talk-timer').classList.add('red');
+        });
+    }
+
+    function nextTalk() {
+        currentPlayerIndex++;
+        if (currentPlayerIndex < numPlayers) {
+            prepareTalkTurn();
+        } else {
+            currentTheme++;
+            if (currentTheme <= 5) {
+                startPlayerOffset = (startPlayerOffset + 1) % numPlayers;
+                currentPlayerIndex = 0;
+                prepareTalkTurn();
+            } else {
+                prepareInference();
+            }
+        }
+    }
+
+    // 推理タイマー機能
+    function prepareInference() {
+        clearInterval(timerInterval);
+        showView('inference-view');
+        
+        const timerDisplay = document.getElementById('inference-timer');
+        timerDisplay.innerText = "180";
+        timerDisplay.classList.remove('red');
+        
+        document.getElementById('inference-start-btn').classList.remove('hidden');
+    }
+
+    function startInferenceTimer() {
+        document.getElementById('inference-start-btn').classList.add('hidden');
+        startCountdown(180, 'inference-timer', () => {
+            document.getElementById('inference-timer').classList.add('red');
+        });
+    }
+
+    // 告白タイム機能
+    function showConfession() {
+        clearInterval(timerInterval);
+        document.getElementById('last-player').innerText = players[numPlayers - 1];
+        showView('confession-view');
+    }
+
+    // 共通のカウントダウン機能
+    function startCountdown(seconds, elementId, onComplete) {
+        clearInterval(timerInterval);
+        let timeLeft = seconds;
+        const display = document.getElementById(elementId);
+        display.innerText = timeLeft;
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            display.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (onComplete) onComplete();
+            }
+        }, 1000);
+    }
+</script>
 </body>
 </html>
