@@ -35,12 +35,11 @@
         }
         
         .bg-circle {
-            background-color: rgba(255, 255, 255, 0.6); /* 白の塗りを60%に変更 */
+            background-color: rgba(255, 255, 255, 0.1); /* 白の塗りを10%に変更 */
             border-radius: 50%;
             width: 100%;
             height: 100%;
             box-sizing: border-box;
-            /* 枠線（border）を削除しました */
         }
 
         #container { 
@@ -231,7 +230,7 @@
         const p = players[currentDealerIdx];
         document.getElementById('dealer-view').innerHTML = `
             <h1>好きな人の確認</h1>
-            <div class="info">次は、<span class="inline-circle">${p}</span> さんの番です</div>
+            <div class="info">次は、<span class="inline-circle">${p}</span> さんの番</div>
             <div class="sub-info">他の方は画面を見ないでください</div>
             <br>
             <button onclick="revealTarget('${p}')">私は ${p} さんです</button>
