@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>恋をしましょう - Helper</title>
     <style>
-        /* 1. 背景を赤に、うっすら整列された丸（ドットパターン）を敷く */
+        /* 1. 背景を赤に、互いに接する大きさの丸パターンを配置 */
         body {
             background-color: #e60012;
-            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 3px, transparent 3.5px);
-            background-size: 30px 30px;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.12) 50%, transparent 50%);
+            background-size: 80px 80px; /* 丸のサイズを大きく変更 */
             background-position: center;
             font-family: "A-OTF Ryumin Pr6N", "Ryumin", "リュウミン", "Hiragino Mincho ProN", "Yu Mincho", serif;
             display: flex;
@@ -22,7 +22,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 2. 白を抜いた領域（画面中央の巨大なカプセル型コンテナ） */
+        /* 2. 白を抜いた領域 */
         #container { 
             background-color: #fff;
             color: #e60012;
@@ -30,20 +30,21 @@
             width: 88%; 
             max-width: 450px; 
             min-height: 65vh;
-            border-radius: 60px; /* もっと丸使ってこう（大きな丸み） */
+            border-radius: 60px; 
             padding: 3rem 2rem;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            /* 少しだけ影を落として白抜きを強調 */
             box-shadow: 0 10px 30px rgba(160, 0, 0, 0.4);
+            position: relative;
+            z-index: 1;
         }
         
         h1 { font-size: 1.4rem; font-weight: normal; margin-bottom: 2rem; letter-spacing: 0.1em; line-height: 1.5; }
         .info { font-size: 1.2rem; line-height: 2; margin-bottom: 1.5rem; letter-spacing: 0.05em; }
-        .sub-info { font-size: 0.9rem; margin-top: 1rem; }
+        .sub-info { font-size: 0.9rem; color: #e60012; opacity: 0.7; margin-top: 1rem; }
 
         /* 3. ターゲットやタイマー用の大きな丸 */
         .circle-char {
@@ -60,9 +61,10 @@
             line-height: 1;
             font-variant-numeric: tabular-nums;
             transition: all 0.3s;
+            box-sizing: border-box;
         }
 
-        /* 4. 文中のアルファベット用の小さな丸（Aさんなど） */
+        /* 4. 文中のアルファベット用の小さな丸 */
         .inline-circle {
             display: inline-flex;
             align-items: center;
@@ -77,7 +79,7 @@
             vertical-align: middle;
         }
 
-        /* 5. ボタン（白い空間に置かれる赤いカプセル） */
+        /* 5. ボタン */
         button {
             background-color: #e60012; 
             border: 2px solid #e60012; 
@@ -87,15 +89,14 @@
             cursor: pointer; 
             transition: 0.3s;
             margin: 8px; 
-            border-radius: 40px; /* ボタンも丸く */
+            border-radius: 40px; 
             font-family: inherit;
             letter-spacing: 0.1em;
         }
-        /* ホバーで白背景・赤文字に反転 */
         button:hover { background-color: #fff; color: #e60012; }
         .hidden { display: none !important; }
         
-        .button-group { margin-top: 1.5rem; }
+        .button-group { margin-top: 1rem; }
     </style>
 </head>
 <body>
@@ -127,16 +128,15 @@
     </div>
 
     <div id="inference-view" class="hidden">
-        <h1 style="margin-bottom: 3rem;">推理タイム</h1>
-        <div class="info">
-            砂時計をひっくり返し、<br>
-            3分間のフリートークを始めてください。
-        </div>
-        <div class="button-group" style="margin-top: 2rem;">
-            <button onclick="showConfession()">予想を終える</button>
+        <h1>推理タイム</h1>
+        <div id="inference-timer" class="circle-char">180</div>
+        <div class="button-group">
+            <button id="inf-start-btn" onclick="startInferenceTimer()">開始</button>
+            <button id="inf-stop-btn" class="hidden" onclick="stopInferenceTimer()">一時停止</button>
+            <button onclick="showConfession()">スキップ</button>
         </div>
         <div class="button-group">
-            <button onclick="location.reload()" style="background-color: #fff; color: #e60012;">最初からやり直す</button>
+            <button onclick="location.reload()" style="background-color: #fff; color: #e60012; font-size: 0.9rem; padding: 8px 24px;">最初からやり直す</button>
         </div>
     </div>
 
@@ -153,6 +153,7 @@
     let currentPlayerIndex = 0;
     let startPlayerOffset = 0;
     let timerInterval;
+    let inferenceTimeLeft = 180;
 
     const views = ['title-view', 'setup-view', 'dealer-view', 'talk-view', 'inference-view', 'confession-view'];
     
@@ -176,7 +177,6 @@
         showView('dealer-view');
     }
 
-    // アルファベットを小さな丸（.inline-circle）で囲む
     function showTargetStep() {
         const p = players[currentDealerIdx];
         document.getElementById('dealer-view').innerHTML = `
@@ -226,7 +226,6 @@
         let actualPlayerIdx = (startPlayerOffset + currentPlayerIndex) % numPlayers;
         
         document.getElementById('theme-label').innerText = `テーマ ${currentTheme} / 5`;
-        // トーク画面のアルファベットも丸で囲む
         document.getElementById('player-label').innerHTML = `Player <span class="inline-circle">${players[actualPlayerIdx]}</span> さんの番`;
         
         const timerDisplay = document.getElementById('talk-timer');
@@ -259,9 +258,49 @@
                 currentPlayerIndex = 0;
                 prepareTalkTurn();
             } else {
-                showView('inference-view');
+                prepareInference();
             }
         }
+    }
+
+    // 推理タイマーの準備
+    function prepareInference() {
+        clearInterval(timerInterval);
+        inferenceTimeLeft = 180;
+        document.getElementById('inference-timer').innerText = inferenceTimeLeft;
+        document.getElementById('inference-timer').style.backgroundColor = '#e60012';
+        document.getElementById('inference-timer').style.color = '#fff';
+        document.getElementById('inference-timer').style.border = 'none';
+        
+        document.getElementById('inf-start-btn').classList.remove('hidden');
+        document.getElementById('inf-stop-btn').classList.add('hidden');
+        showView('inference-view');
+    }
+
+    function startInferenceTimer() {
+        document.getElementById('inf-start-btn').classList.add('hidden');
+        document.getElementById('inf-stop-btn').classList.remove('hidden');
+        
+        clearInterval(timerInterval);
+        const display = document.getElementById('inference-timer');
+        
+        timerInterval = setInterval(() => {
+            inferenceTimeLeft--;
+            display.innerText = inferenceTimeLeft;
+            if (inferenceTimeLeft <= 0) {
+                clearInterval(timerInterval);
+                display.style.backgroundColor = '#fff';
+                display.style.color = '#e60012';
+                display.style.border = '4px solid #e60012';
+                document.getElementById('inf-stop-btn').classList.add('hidden');
+            }
+        }, 1000);
+    }
+
+    function stopInferenceTimer() {
+        clearInterval(timerInterval);
+        document.getElementById('inf-stop-btn').classList.add('hidden');
+        document.getElementById('inf-start-btn').classList.remove('hidden');
     }
 
     function showConfession() {
