@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>恋をしましょう - Helper</title>
     <style>
+        /* 1. 書体をリュウミン（明朝体）に設定し、色を白と赤のみに制限 */
         body {
             background-color: #fff;
-            color: #1a1a1a;
-            font-family: sans-serif;
+            color: #e60012; /* すべてのテキストを赤に */
+            font-family: "A-OTF Ryumin Pr6N", "Ryumin", "リュウミン", "Hiragino Mincho ProN", "Yu Mincho", serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,31 +17,56 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
         #container { text-align: center; width: 80%; max-width: 600px; }
         
-        h1 { font-size: 1.2rem; font-weight: normal; margin-bottom: 3rem; }
-        .timer { font-size: 6rem; margin: 1rem 0; font-variant-numeric: tabular-nums; }
-        .red { color: #e60012; }
-        .info { font-size: 1.2rem; line-height: 1.8; margin-bottom: 2rem; }
-        .sub-info { font-size: 0.9rem; color: #666; margin-top: 1rem; }
+        h1 { font-size: 1.4rem; font-weight: normal; margin-bottom: 3rem; letter-spacing: 0.1em; }
+        .info { font-size: 1.2rem; line-height: 2; margin-bottom: 2rem; letter-spacing: 0.05em; }
+        .sub-info { font-size: 0.9rem; margin-top: 1rem; }
 
-        button {
-            background: none; border: 1px solid #1a1a1a; padding: 10px 30px;
-            font-size: 1rem; cursor: pointer; transition: 0.2s;
-            margin: 5px;
+        /* 2. 丸を基調としたデザイン（アルファベットやタイマー用） */
+        .circle-char {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background-color: #e60012;
+            color: #fff;
+            font-size: 4.5rem;
+            margin: 1.5rem auto;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            transition: all 0.3s;
         }
-        button:hover { background-color: #1a1a1a; color: #fff; }
+
+        /* 3. ボタンは角丸（白と赤の反転） */
+        button {
+            background-color: #fff; 
+            border: 1px solid #e60012; 
+            color: #e60012;
+            padding: 12px 40px;
+            font-size: 1rem; 
+            cursor: pointer; 
+            transition: 0.3s;
+            margin: 5px; 
+            border-radius: 40px; /* 角丸設定 */
+            font-family: inherit; /* ボタンもリュウミンに */
+            letter-spacing: 0.1em;
+        }
+        button:hover { background-color: #e60012; color: #fff; }
         .hidden { display: none !important; }
         
-        .button-group { margin-top: 1rem; }
+        .button-group { margin-top: 1.5rem; }
     </style>
 </head>
 <body>
 
 <div id="container">
     <div id="title-view">
-        <h1>恋をしましょう</h1>
+        <h1 style="font-size: 2rem; margin-bottom: 4rem;">恋をしましょう</h1>
         <button onclick="showView('setup-view')">ゲームを始める</button>
     </div>
 
@@ -56,8 +82,8 @@
 
     <div id="talk-view" class="hidden">
         <h1 id="theme-label">テーマ 1 / 5</h1>
-        <div id="player-label" class="info">Player Aさんの番</div>
-        <div id="talk-timer" class="timer">30</div>
+        <div id="player-label" class="info">Player A さんの番</div>
+        <div id="talk-timer" class="circle-char">30</div>
         <div class="button-group">
             <button id="talk-start-btn" onclick="startTalkTimer()">開始</button>
             <button id="talk-next-btn" onclick="nextTalk()">NEXT (スキップ)</button>
@@ -66,9 +92,11 @@
 
     <div id="inference-view" class="hidden">
         <h1>推理タイム</h1>
-        <div id="inference-timer" class="timer">180</div>
+        <div class="info">
+            砂時計をひっくり返し、<br>
+            3分間のフリートークを始めてください。
+        </div>
         <div class="button-group">
-            <button id="inference-start-btn" onclick="startInferenceTimer()">開始</button>
             <button onclick="showConfession()">予想を終える</button>
         </div>
         <div class="button-group">
@@ -77,15 +105,6 @@
     </div>
 
     <div id="confession-view" class="hidden">
-        <h1>告白タイム</h1>
-        <div class="info">
-            Aさんから順に告白しましょう。<br><br>
-            <span id="last-player"></span>さんまで告白を終えた時点で、<br>
-            最もポイントの多いプレイヤーの勝利です。
-        </div>
-        <div class="button-group">
-            <button onclick="location.reload()">次のゲームへ</button>
-        </div>
     </div>
 </div>
 
@@ -126,19 +145,20 @@
         const p = players[currentDealerIdx];
         document.getElementById('dealer-view').innerHTML = `
             <h1>ターゲットの確認</h1>
-            <div class="info">次は、<span class="red">${p}</span> さんの番です</div>
+            <div class="info">次は、${p} さんの番です</div>
             <div class="sub-info">他の方は画面を見ないでください</div>
             <br>
             <button onclick="revealTarget('${p}')">私は${p}さんです</button>
         `;
     }
 
+    // アルファベットを丸背景の中に表示
     function revealTarget(p) {
         const target = pairings[p];
         document.getElementById('dealer-view').innerHTML = `
             <h1>ターゲットの確認</h1>
             <div class="info">${p}さんはこのゲーム中</div>
-            <div class="timer red">${target}</div>
+            <div class="circle-char">${target}</div>
             <div class="info">さんに恋をしましょう</div>
             <br>
             <button onclick="finishTargetStep()">確認しました</button>
@@ -167,7 +187,6 @@
         prepareTalkTurn();
     }
 
-    // 次の人の順番をセットする（タイマーはまだ動かさない）
     function prepareTalkTurn() {
         clearInterval(timerInterval);
         let actualPlayerIdx = (startPlayerOffset + currentPlayerIndex) % numPlayers;
@@ -177,16 +196,22 @@
         
         const timerDisplay = document.getElementById('talk-timer');
         timerDisplay.innerText = "30";
-        timerDisplay.classList.remove('red');
+        // タイマーの初期色（赤背景・白文字）
+        timerDisplay.style.backgroundColor = '#e60012';
+        timerDisplay.style.color = '#fff';
+        timerDisplay.style.border = 'none';
         
         document.getElementById('talk-start-btn').classList.remove('hidden');
     }
 
-    // 手動でトークタイマーを開始する
     function startTalkTimer() {
         document.getElementById('talk-start-btn').classList.add('hidden');
         startCountdown(30, 'talk-timer', () => {
-            document.getElementById('talk-timer').classList.add('red');
+            // 時間切れで色を反転（白背景・赤文字・赤枠）
+            const timerDisplay = document.getElementById('talk-timer');
+            timerDisplay.style.backgroundColor = '#fff';
+            timerDisplay.style.color = '#e60012';
+            timerDisplay.style.border = '2px solid #e60012';
         });
     }
 
@@ -201,38 +226,35 @@
                 currentPlayerIndex = 0;
                 prepareTalkTurn();
             } else {
-                prepareInference();
+                showView('inference-view');
             }
         }
     }
 
-    // 推理タイマー機能
-    function prepareInference() {
-        clearInterval(timerInterval);
-        showView('inference-view');
-        
-        const timerDisplay = document.getElementById('inference-timer');
-        timerDisplay.innerText = "180";
-        timerDisplay.classList.remove('red');
-        
-        document.getElementById('inference-start-btn').classList.remove('hidden');
-    }
-
-    function startInferenceTimer() {
-        document.getElementById('inference-start-btn').classList.add('hidden');
-        startCountdown(180, 'inference-timer', () => {
-            document.getElementById('inference-timer').classList.add('red');
-        });
-    }
-
-    // 告白タイム機能
+    // 告白タイム機能（最後の人のアルファベットも丸デザインで表示）
     function showConfession() {
         clearInterval(timerInterval);
-        document.getElementById('last-player').innerText = players[numPlayers - 1];
+        const lastPlayer = players[numPlayers - 1];
+        
+        document.getElementById('confession-view').innerHTML = `
+            <h1>告白タイム</h1>
+            <div class="info">
+                Aさんから順に告白しましょう。<br><br>
+                最後は
+            </div>
+            <div class="circle-char" style="width: 80px; height: 80px; font-size: 2.5rem; margin: 1rem auto;">${lastPlayer}</div>
+            <div class="info">
+                さんです。<br><br>
+                告白を終えた時点で、<br>
+                最もポイントの多いプレイヤーの勝利です。
+            </div>
+            <div class="button-group">
+                <button onclick="location.reload()">次のゲームへ</button>
+            </div>
+        `;
         showView('confession-view');
     }
 
-    // 共通のカウントダウン機能
     function startCountdown(seconds, elementId, onComplete) {
         clearInterval(timerInterval);
         let timeLeft = seconds;
