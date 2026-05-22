@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>恋をしましょう - Helper</title>
     <style>
-        /* 1. 書体をリュウミン（明朝体）に設定し、色を白と赤のみに制限 */
+        /* 1. 背景を赤に、うっすら整列された丸（ドットパターン）を敷く */
         body {
-            background-color: #fff;
-            color: #e60012; /* すべてのテキストを赤に */
+            background-color: #e60012;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 3px, transparent 3.5px);
+            background-size: 30px 30px;
+            background-position: center;
             font-family: "A-OTF Ryumin Pr6N", "Ryumin", "リュウミン", "Hiragino Mincho ProN", "Yu Mincho", serif;
             display: flex;
             flex-direction: column;
@@ -19,13 +21,31 @@
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
         }
-        #container { text-align: center; width: 80%; max-width: 600px; }
+
+        /* 2. 白を抜いた領域（画面中央の巨大なカプセル型コンテナ） */
+        #container { 
+            background-color: #fff;
+            color: #e60012;
+            text-align: center; 
+            width: 88%; 
+            max-width: 450px; 
+            min-height: 65vh;
+            border-radius: 60px; /* もっと丸使ってこう（大きな丸み） */
+            padding: 3rem 2rem;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            /* 少しだけ影を落として白抜きを強調 */
+            box-shadow: 0 10px 30px rgba(160, 0, 0, 0.4);
+        }
         
-        h1 { font-size: 1.4rem; font-weight: normal; margin-bottom: 3rem; letter-spacing: 0.1em; }
-        .info { font-size: 1.2rem; line-height: 2; margin-bottom: 2rem; letter-spacing: 0.05em; }
+        h1 { font-size: 1.4rem; font-weight: normal; margin-bottom: 2rem; letter-spacing: 0.1em; line-height: 1.5; }
+        .info { font-size: 1.2rem; line-height: 2; margin-bottom: 1.5rem; letter-spacing: 0.05em; }
         .sub-info { font-size: 0.9rem; margin-top: 1rem; }
 
-        /* 2. 丸を基調としたデザイン（アルファベットやタイマー用） */
+        /* 3. ターゲットやタイマー用の大きな丸 */
         .circle-char {
             display: flex;
             align-items: center;
@@ -42,21 +62,37 @@
             transition: all 0.3s;
         }
 
-        /* 3. ボタンは角丸（白と赤の反転） */
+        /* 4. 文中のアルファベット用の小さな丸（Aさんなど） */
+        .inline-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #e60012;
+            color: #fff;
+            font-size: 1.2rem;
+            margin: 0 6px;
+            vertical-align: middle;
+        }
+
+        /* 5. ボタン（白い空間に置かれる赤いカプセル） */
         button {
-            background-color: #fff; 
-            border: 1px solid #e60012; 
-            color: #e60012;
+            background-color: #e60012; 
+            border: 2px solid #e60012; 
+            color: #fff;
             padding: 12px 40px;
             font-size: 1rem; 
             cursor: pointer; 
             transition: 0.3s;
-            margin: 5px; 
-            border-radius: 40px; /* 角丸設定 */
-            font-family: inherit; /* ボタンもリュウミンに */
+            margin: 8px; 
+            border-radius: 40px; /* ボタンも丸く */
+            font-family: inherit;
             letter-spacing: 0.1em;
         }
-        button:hover { background-color: #e60012; color: #fff; }
+        /* ホバーで白背景・赤文字に反転 */
+        button:hover { background-color: #fff; color: #e60012; }
         .hidden { display: none !important; }
         
         .button-group { margin-top: 1.5rem; }
@@ -66,12 +102,12 @@
 
 <div id="container">
     <div id="title-view">
-        <h1 style="font-size: 2rem; margin-bottom: 4rem;">恋をしましょう</h1>
+        <h1 style="font-size: 2rem; margin-bottom: 3rem;">恋をしましょう</h1>
         <button onclick="showView('setup-view')">ゲームを始める</button>
     </div>
 
     <div id="setup-view" class="hidden">
-        <h1>プレイヤー人数を選択</h1>
+        <h1 style="margin-bottom: 3rem;">プレイヤー人数を選択</h1>
         <button onclick="startDealer(4)">4人</button>
         <button onclick="startDealer(5)">5人</button>
         <button onclick="startDealer(6)">6人</button>
@@ -82,7 +118,7 @@
 
     <div id="talk-view" class="hidden">
         <h1 id="theme-label">テーマ 1 / 5</h1>
-        <div id="player-label" class="info">Player A さんの番</div>
+        <div id="player-label" class="info"></div>
         <div id="talk-timer" class="circle-char">30</div>
         <div class="button-group">
             <button id="talk-start-btn" onclick="startTalkTimer()">開始</button>
@@ -91,16 +127,16 @@
     </div>
 
     <div id="inference-view" class="hidden">
-        <h1>推理タイム</h1>
+        <h1 style="margin-bottom: 3rem;">推理タイム</h1>
         <div class="info">
             砂時計をひっくり返し、<br>
             3分間のフリートークを始めてください。
         </div>
-        <div class="button-group">
+        <div class="button-group" style="margin-top: 2rem;">
             <button onclick="showConfession()">予想を終える</button>
         </div>
         <div class="button-group">
-            <button onclick="location.reload()">最初からやり直す</button>
+            <button onclick="location.reload()" style="background-color: #fff; color: #e60012;">最初からやり直す</button>
         </div>
     </div>
 
@@ -125,7 +161,6 @@
         document.getElementById(id).classList.remove('hidden');
     }
 
-    // ディーラー機能
     function startDealer(n) {
         numPlayers = n;
         players = Array.from({length: n}, (_, i) => String.fromCharCode(65 + i));
@@ -141,23 +176,23 @@
         showView('dealer-view');
     }
 
+    // アルファベットを小さな丸（.inline-circle）で囲む
     function showTargetStep() {
         const p = players[currentDealerIdx];
         document.getElementById('dealer-view').innerHTML = `
             <h1>ターゲットの確認</h1>
-            <div class="info">次は、${p} さんの番です</div>
+            <div class="info">次は、<span class="inline-circle">${p}</span> さんの番です</div>
             <div class="sub-info">他の方は画面を見ないでください</div>
             <br>
-            <button onclick="revealTarget('${p}')">私は${p}さんです</button>
+            <button onclick="revealTarget('${p}')">私は ${p} さんです</button>
         `;
     }
 
-    // アルファベットを丸背景の中に表示
     function revealTarget(p) {
         const target = pairings[p];
         document.getElementById('dealer-view').innerHTML = `
             <h1>ターゲットの確認</h1>
-            <div class="info">${p}さんはこのゲーム中</div>
+            <div class="info"><span class="inline-circle">${p}</span> さんはこのゲーム中</div>
             <div class="circle-char">${target}</div>
             <div class="info">さんに恋をしましょう</div>
             <br>
@@ -171,7 +206,7 @@
             showTargetStep();
         } else {
             document.getElementById('dealer-view').innerHTML = `
-                <h1>準備完了</h1>
+                <h1 style="margin-bottom: 3rem;">準備完了</h1>
                 <div class="info">全員の確認が終わりました。</div>
                 <br>
                 <button onclick="initTalk()">トーク開始</button>
@@ -179,7 +214,6 @@
         }
     }
 
-    // トークタイマー機能
     function initTalk() {
         currentTheme = 1;
         startPlayerOffset = 0;
@@ -192,11 +226,11 @@
         let actualPlayerIdx = (startPlayerOffset + currentPlayerIndex) % numPlayers;
         
         document.getElementById('theme-label').innerText = `テーマ ${currentTheme} / 5`;
-        document.getElementById('player-label').innerText = `Player ${players[actualPlayerIdx]} さんの番`;
+        // トーク画面のアルファベットも丸で囲む
+        document.getElementById('player-label').innerHTML = `Player <span class="inline-circle">${players[actualPlayerIdx]}</span> さんの番`;
         
         const timerDisplay = document.getElementById('talk-timer');
         timerDisplay.innerText = "30";
-        // タイマーの初期色（赤背景・白文字）
         timerDisplay.style.backgroundColor = '#e60012';
         timerDisplay.style.color = '#fff';
         timerDisplay.style.border = 'none';
@@ -207,11 +241,10 @@
     function startTalkTimer() {
         document.getElementById('talk-start-btn').classList.add('hidden');
         startCountdown(30, 'talk-timer', () => {
-            // 時間切れで色を反転（白背景・赤文字・赤枠）
             const timerDisplay = document.getElementById('talk-timer');
             timerDisplay.style.backgroundColor = '#fff';
             timerDisplay.style.color = '#e60012';
-            timerDisplay.style.border = '2px solid #e60012';
+            timerDisplay.style.border = '4px solid #e60012';
         });
     }
 
@@ -231,13 +264,12 @@
         }
     }
 
-    // 告白タイム機能（最後の人のアルファベットも丸デザインで表示）
     function showConfession() {
         clearInterval(timerInterval);
         const lastPlayer = players[numPlayers - 1];
         
         document.getElementById('confession-view').innerHTML = `
-            <h1>告白タイム</h1>
+            <h1 style="margin-bottom: 3rem;">告白タイム</h1>
             <div class="info">
                 Aさんから順に告白しましょう。<br><br>
                 最後は
